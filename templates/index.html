@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FinPay by VORTEx</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #e0e5ec; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s; }
+        
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #002e6e; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .logo-img { width: 140px; margin-bottom: 20px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: white; object-fit: contain; }
+        #login-screen h1 { margin-bottom: 5px; font-size: 2.8rem; letter-spacing: -1px; }
+        
+        .app-container { width: 100%; max-width: 480px; background: #f8f9fc; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        
+        @media (min-width: 800px) {
+            .app-container { max-width: 1000px; padding-top: 40px; background: transparent; box-shadow: none; display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; }
+            .header-bg { position: sticky; top: 40px; border-radius: 24px !important; }
+            .content { padding: 0 !important; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .full-width-card { grid-column: span 2; }
+            .card, .form-section { margin-bottom: 0 !important; height: fit-content; }
+        }
+
+        .header-bg { background: linear-gradient(135deg, #0047b3, #002e6e); color: white; padding: 30px 15px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; text-align: center; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        
+        /* Hamburger Menu Icon */
+        .menu-btn { background: none; border: none; color: white; font-size: 1.6rem; cursor: pointer; padding: 0; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logout-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .logout-btn:hover { background: rgba(255,255,255,0.2); }
+        .main-balance { font-size: 2.8rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 15px; }
+        
+        .action-grid { display: flex; justify-content: space-between; margin-top: 20px; gap: 5px; }
+        .action-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .action-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px; border-radius: 18px; width: 55px; height: 55px; font-size: 1.3rem; cursor: pointer; backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; }
+        .action-label { font-size: 0.75rem; margin-top: 8px; display: block; font-weight: 500; text-align: center; }
+        
+        .content { padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
+        h3 { margin-top: 0; font-size: 1.1rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+
+        .form-section { display: none; background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 2px solid #0047b3; }
+        input, select { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; font-family: 'Inter'; font-size: 1rem; background: #f8fafc; color: #0f172a; }
+        .submit-btn { width: 100%; background: #0047b3; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1.05rem; margin-top: 10px; transition: 0.2s; }
+        .submit-btn:hover { background: #002e6e; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+        .tab { flex: 1; text-align: center; padding: 10px; background: #f1f5f9; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .tab.active { background: #0047b3; color: white; }
+
+        .receivers-list { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; margin: 15px 0; scrollbar-width: none; }
+        .receivers-list::-webkit-scrollbar { display: none; }
+        .receiver-avatar { min-width: 60px; text-align: center; cursor: pointer; }
+        .receiver-avatar img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #e2e8f0; object-fit: cover; }
+        .receiver-avatar span { display: block; font-size: 0.75rem; margin-top: 5px; font-weight: 500; color: #475569; }
+
+        .history-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+        .history-controls input[type="date"] { margin: 0; padding: 10px; }
+        .tx-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; align-items: center;}
+        .tx-left h4 { margin: 0; font-size: 0.95rem; color: #0f172a; }
+        .tx-left p { margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b; }
+        .tx-right { text-align: right; font-weight: 700; font-size: 1.05rem; }
+        .tx-minus { color: #ef4444; }
+        .tx-plus { color: #10b981; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(5px); }
+        .modal-card { background: white; padding: 25px; border-radius: 24px; width: 100%; max-width: 400px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.8rem; cursor: pointer; color: #64748b; }
+        
+        #qr-reader { width: 100%; border-radius: 12px; overflow: hidden; border: none !important; }
+        #qr-reader video { max-width: 100% !important; border-radius: 12px; }
+
+        /* Profile Modal Specifics */
+        .profile-info { text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 0.9rem; color: #334155; }
+        .profile-info p { margin: 5px 0; }
+        .profile-info strong { color: #0f172a; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <img src="/static/logo.jpeg" alt="FinPay Logo" class="logo-img" onerror="this.onerror=null; this.src='/static/logo.jpg';">
+    <h1>FinPay</h1>
+    <p style="margin-top:-5px; margin-bottom:30px; color:#93c5fd; font-weight: 500; letter-spacing: 2px;">BY VORTEx</p>
+    <div style="width: 100%; max-width: 300px;">
+        <input type="text" id="username" placeholder="Username (admin)" value="admin">
+        <input type="password" id="password" placeholder="Password (password)" value="password">
+        <button class="submit-btn" onclick="login()" style="background:#10b981;">Secure Login</button>
+        <p id="login-error" style="color: #fca5a5; font-size: 0.9rem; text-align: center; display: none;">Invalid credentials</p>
+    </div>
+</div>
+
+<div class="app-container" id="app-container" style="display: none;">
+    <div class="header-bg">
+        <div class="header-top">
+            <div class="header-left">
+                <button class="menu-btn" onclick="openProfileModal()">☰</button>
+                <div class="greeting">Good Afternoon, User</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+        <div class="main-balance" id="main-balance">₹0.00</div>
+        
+        <div class="action-grid">
+            <div class="action-item"><button class="action-btn" onclick="toggleForm('add-money-form')">🏦</button><span class="action-label">Add</span></div>
+            <div class="action-item"><button class="action-btn" onclick="toggleForm('spend-form')">💸</button><span class="action-label">Pay</span></div>
+            <div class="action-item"><button class="action-btn" onclick="openScanner()">📷</button><span class="action-label">Scan</span></div>
+            <div class="action-item"><button class="action-btn" onclick="toggleForm('donate-form')">🤝</button><span class="action-label">Donate</span></div>
+            <div class="action-item"><button class="action-btn" onclick="openPiggyModal()">🐷</button><span class="action-label">Redeem</span></div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="add-money-form" class="form-section full-width-card">
+            <h3>Add Funds to FinPay</h3>
+            <div class="tabs">
+                <div class="tab active" id="tab-card" onclick="switchTab('card')">Debit/Credit Card</div>
+                <div class="tab" id="tab-upi" onclick="switchTab('upi')">UPI Bank</div>
+            </div>
+            
+            <input type="number" id="add-amount" placeholder="Amount (₹)">
+            
+            <div id="card-inputs">
+                <input type="text" placeholder="Card Number (XXXX-XXXX-XXXX-XXXX)" maxlength="19">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" placeholder="MM/YY" maxlength="5">
+                    <input type="password" placeholder="CVV" maxlength="3">
+                </div>
+            </div>
+            
+            <div id="upi-inputs" style="display: none;">
+                <input type="text" placeholder="Enter linked UPI ID (e.g. user@okhdfc)">
+                <input type="password" placeholder="6-Digit UPI PIN" maxlength="6">
+            </div>
+
+            <button class="submit-btn" onclick="addMoney()" style="background:#10b981;">Authorize & Add Funds</button>
+        </div>
+
+        <div id="spend-form" class="form-section full-width-card">
+            <h3>Pay Anyone</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px;">Recent Receivers</p>
+            <div class="receivers-list">
+                <div class="receiver-avatar" onclick="fillReceiver('Rahul Sharma', 'rahul@upi')">
+                    <img src="https://ui-avatars.com/api/?name=Rahul+Sharma&background=0D8ABC&color=fff">
+                    <span>Rahul</span>
+                </div>
+                <div class="receiver-avatar" onclick="fillReceiver('Priya Store', 'priya.shop@ybl')">
+                    <img src="https://ui-avatars.com/api/?name=Priya+Store&background=E53E3E&color=fff">
+                    <span>Priya</span>
+                </div>
+                <div class="receiver-avatar" onclick="fillReceiver('Zomato', 'zomato@paytm')">
+                    <img src="https://ui-avatars.com/api/?name=Zomato&background=ED8936&color=fff">
+                    <span>Zomato</span>
+                </div>
+            </div>
+
+            <input type="text" id="receiver-name" placeholder="Receiver Name">
+            <input type="text" id="upi-id" placeholder="UPI ID (e.g. name@bank)">
+            <input type="number" id="spend-amount" placeholder="Amount (₹)">
+            
+            <select id="spend-category">
+                <option value="Food">🍔 Food & Dining</option>
+                <option value="Travel">🚕 Travel & Auto</option>
+                <option value="Recharge">📱 Bills & Recharge</option>
+                <option value="Shopping">🛍️ Shopping</option>
+                <option value="Others">📦 Others</option>
+            </select>
+
+            <select id="spend-round-to" style="background-color: #f0fff4; border-color: #10b981; color: #059669; font-weight: 600;">
+                <option value="10">🐷 Round-Up (Nearest ₹10)</option>
+                <option value="100">🐷 Max Savings (Nearest ₹100)</option>
+            </select>
+
+            <button class="submit-btn" onclick="spendMoney()">Proceed to Pay</button>
+        </div>
+
+        <div id="donate-form" class="form-section full-width-card">
+            <h3>Make a Donation</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">Give back to the community directly through FinPay.</p>
+            <input type="number" id="donate-amount" placeholder="Donation Amount (₹)">
+            <select id="donate-charity">
+                <option value="Child Relief Fund">👶 Child Relief Fund</option>
+                <option value="Animal Rescue">🐾 Animal Rescue Center</option>
+                <option value="Disaster Relief">🌪️ Disaster Relief Team</option>
+            </select>
+            <button class="submit-btn" onclick="donateMoney()" style="background: #e67e22;">Donate Now</button>
+        </div>
+
+        <div class="card">
+            <h3>🎯 Target Milestones</h3>
+            <div id="milestone-container"></div>
+        </div>
+
+        <div class="card">
+            <h3>📈 VORTEx Analytics</h3>
+            <div style="background: #fff3cd; color: #856404; padding: 12px; border-radius: 12px; font-size: 0.9rem; margin-bottom: 10px; font-weight: 600;" id="ai-offer">Loading AI...</div>
+            <div style="background: #e2e8f0; color: #334155; padding: 12px; border-radius: 12px; font-size: 0.9rem;" id="ml-prediction">Loading ML...</div>
+        </div>
+
+        <div class="card full-width-card">
+            <h3>🧾 Recent Activity</h3>
+            <div class="history-controls">
+                <input type="date" id="history-date-filter" onchange="renderHistory()">
+                <button class="submit-btn" style="margin: 0; background: #e2e8f0; color: #334155; width: auto;" onclick="clearDateFilter()">Clear</button>
+            </div>
+            <div id="history-container"></div>
+        </div>
+
+    </div>
+</div>
+
+<div id="profile-modal" class="modal-overlay">
+    <div class="modal-card" style="text-align: center;">
+        <span class="close-btn" onclick="closeProfileModal()">&times;</span>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=0047b3&color=fff&size=128" style="border-radius: 50%; width: 80px; margin-bottom: 10px;">
+        <h3 style="margin: 0; justify-content: center; font-size: 1.3rem;">Admin User</h3>
+        <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">admin@finpay</p>
+        
+        <div class="profile-info">
+            <p><strong>Bank:</strong> FinPay Payments Bank</p>
+            <p><strong>A/C No:</strong> 0000 1234 5678</p>
+            <p><strong>IFSC:</strong> FINP0000123</p>
+        </div>
+        
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=admin@finpay&pn=Admin%20User" alt="Receive QR Code" style="border-radius: 10px; border: 2px solid #e2e8f0; padding: 5px;">
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Scan to receive money</p>
+    </div>
+</div>
+
+<div id="scanner-modal" class="modal-overlay">
+    <div class="modal-card">
+        <span class="close-btn" onclick="closeScanner()">&times;</span>
+        <h3 style="text-align: center; margin-bottom: 20px;">⛶ Scan to Pay</h3>
+        <div id="qr-reader"></div>
+        <p style="text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 15px;">Point camera at any UPI QR Code</p>
+    </div>
+</div>
+
+<div id="redeem-modal" class="modal-overlay">
+    <div class="modal-card" style="text-align: center;">
+        <span class="close-btn" onclick="closePiggyModal()">&times;</span>
+        <h3 style="justify-content: center; font-size: 1.5rem;">🐷 Virtual Piggy Bank</h3>
+        <div style="font-size: 3rem; font-weight: 700; color: #10b981; margin: 20px 0;" id="modal-piggy-bank">₹0.00</div>
+        <button class="submit-btn" style="background:#10b981;" onclick="redeem()">Transfer to Main Balance</button>
+    </div>
+</div>
+
+<script>
+    let allTransactions = [];
+    let html5QrcodeScanner = null;
+
+    async function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        const res = await fetch('/api/login', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: u, password: p })
+        });
+        if (res.ok) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = ''; 
+            
+            if (window.innerWidth >= 800) {
+                document.body.style.background = "linear-gradient(135deg, #0f172a, #1e1b4b)";
+            }
+            loadState();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function logout() {
+        document.getElementById('password').value = '';
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.body.style.background = "#e0e5ec"; 
+    }
+
+    function toggleForm(formId) {
+        ['spend-form', 'add-money-form', 'donate-form'].forEach(id => {
+            if (id !== formId) document.getElementById(id).style.display = 'none';
+        });
+        const form = document.getElementById(formId);
+        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function switchTab(tabType) {
+        document.getElementById('tab-card').classList.remove('active');
+        document.getElementById('tab-upi').classList.remove('active');
+        document.getElementById('card-inputs').style.display = 'none';
+        document.getElementById('upi-inputs').style.display = 'none';
+
+        if (tabType === 'card') {
+            document.getElementById('tab-card').classList.add('active');
+            document.getElementById('card-inputs').style.display = 'block';
+        } else {
+            document.getElementById('tab-upi').classList.add('active');
+            document.getElementById('upi-inputs').style.display = 'block';
+        }
+    }
+
+    function fillReceiver(name, upi) {
+        document.getElementById('receiver-name').value = name;
+        document.getElementById('upi-id').value = upi;
+    }
+
+    // Modal Triggers
+    function openProfileModal() { document.getElementById('profile-modal').style.display = 'flex'; }
+    function closeProfileModal() { document.getElementById('profile-modal').style.display = 'none'; }
+    function openPiggyModal() { document.getElementById('redeem-modal').style.display = 'flex'; }
+    function closePiggyModal() { document.getElementById('redeem-modal').style.display = 'none'; }
+
+    function openScanner() {
+        document.getElementById('scanner-modal').style.display = 'flex';
+        html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function closeScanner() {
+        document.getElementById('scanner-modal').style.display = 'none';
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
+    }
+
+    function onScanSuccess(decodedText) {
+        closeScanner();
+        let upi = decodedText;
+        if (decodedText.includes("pa=")) {
+            const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+            upi = urlParams.get('pa') || decodedText;
+            document.getElementById('receiver-name').value = urlParams.get('pn') || "Merchant";
+        }
+        toggleForm('spend-form');
+        document.getElementById('upi-id').value = upi;
+        alert("✅ QR Scanned! Enter amount to pay.");
+    }
+    
+    function onScanFailure(error) { }
+
+    async function loadState() {
+        const res = await fetch('/api/state');
+        const data = await res.json();
+        
+        document.getElementById('main-balance').innerText = `₹${data.account.main_balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('modal-piggy-bank').innerText = `₹${data.account.piggy_bank.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('ai-offer').innerText = data.ai_offer;
+        document.getElementById('ml-prediction').innerText = data.prediction;
+
+        const m = data.active_milestone;
+        if (m) {
+            const pct = Math.min((m.progress / m.target) * 100, 100);
+            document.getElementById('milestone-container').innerHTML = `
+                <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; font-weight: 600; color: #0f172a;">
+                        <span>${m.desc}</span>
+                        <span>₹${Math.min(m.progress, m.target)} / ₹${m.target}</span>
+                    </div>
+                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 10px;"><div style="background: #f59e0b; height: 100%; border-radius: 4px; width: ${pct}%"></div></div>
+                </div>`;
+        } else {
+            document.getElementById('milestone-container').innerHTML = `<p style="color: #10b981; font-weight: bold;">🎉 All current milestones completed!</p>`;
+        }
+
+        allTransactions = data.transactions;
+        renderHistory();
+    }
+
+    function clearDateFilter() {
+        document.getElementById('history-date-filter').value = '';
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const filterDate = document.getElementById('history-date-filter').value; 
+        
+        let txToShow = allTransactions;
+        if (filterDate) {
+            txToShow = allTransactions.filter(t => t.date.startsWith(filterDate));
+        }
+        
+        const hHtml = txToShow.map(t => {
+            let colorClass = 'tx-minus';
+            let displayValue = `-₹${t.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+
+            if (t.type === 'Cashback' || t.type === 'Redeem' || t.type === 'Round-Up' || t.type === 'Deposit') {
+                colorClass = 'tx-plus';
+                displayValue = `+₹${t.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            }
+            
+            return `
+            <div class="tx-item">
+                <div class="tx-left">
+                    <h4>${t.receiver || t.category}</h4>
+                    <p>${t.type} • ${t.date}</p>
+                </div>
+                <div class="tx-right ${colorClass}">${displayValue}</div>
+            </div>`
+        }).join('');
+        
+        document.getElementById('history-container').innerHTML = hHtml || "<p style='color:#64748b; text-align:center; margin-top: 20px;'>No transactions found.</p>";
+    }
+
+    async function addMoney() {
+        const amount = document.getElementById('add-amount').value;
+        const method = document.getElementById('tab-card').classList.contains('active') ? 'Credit/Debit Card' : 'UPI Transfer';
+        
+        if (!amount || amount <= 0) return alert("Enter a valid amount");
+        await fetch('/api/add_money', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ amount: parseFloat(amount), method: method })
+        });
+        document.getElementById('add-amount').value = '';
+        toggleForm('add-money-form');
+        alert("✅ Funds Added!");
+        loadState();
+    }
+
+    async function spendMoney() {
+        const amount = document.getElementById('spend-amount').value;
+        const category = document.getElementById('spend-category').value;
+        const upiId = document.getElementById('upi-id').value || 'Unknown';
+        const receiver = document.getElementById('receiver-name').value || 'Merchant';
+        const roundTo = document.getElementById('spend-round-to').value; 
+        
+        if (!amount || amount <= 0) return alert("Enter a valid amount");
+
+        const res = await fetch('/api/spend', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                amount: parseFloat(amount), category: category, 
+                upi_id: upiId, receiver_name: receiver, round_to: parseInt(roundTo)
+            })
+        });
+        
+        if (!res.ok) alert("❌ Transaction failed. Insufficient funds.");
+        else {
+            alert("✅ Payment Successful!");
+            document.getElementById('spend-amount').value = '';
+            document.getElementById('upi-id').value = '';
+            document.getElementById('receiver-name').value = '';
+            toggleForm('spend-form');
+            loadState();
+        }
+    }
+
+    async function donateMoney() {
+        const amount = document.getElementById('donate-amount').value;
+        const charity = document.getElementById('donate-charity').value;
+        if (!amount || amount <= 0) return alert("Enter a valid amount");
+
+        const res = await fetch('/api/donate', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ amount: parseFloat(amount), charity: charity })
+        });
+        if (!res.ok) alert("❌ Donation failed. Insufficient funds.");
+        else {
+            alert("✅ Thank you for your donation!");
+            document.getElementById('donate-amount').value = '';
+            toggleForm('donate-form');
+            loadState();
+        }
+    }
+
+    async function redeem() {
+        const res = await fetch('/api/redeem', { method: 'POST' });
+        if (!res.ok) alert("Piggy bank is empty!");
+        else alert("🎉 Transfer successful!");
+        closePiggyModal();
+        loadState();
+    }
+</script>
+
+</body>
+</html>
