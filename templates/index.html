@@ -256,7 +256,7 @@
     async function login() {
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
-        const res = await fetch('/api/login', {
+        const res = await fetch('https://vortex-4.onrender.com//api/login', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ username: u, password: p })
         });
@@ -342,7 +342,7 @@
     function onScanFailure(error) { }
 
     async function loadState() {
-        const res = await fetch('/api/state');
+        const res = await fetch('https://vortex-4.onrender.com//api/state');
         const data = await res.json();
         
         document.getElementById('main-balance').innerText = `₹${data.account.main_balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -409,7 +409,7 @@
         const method = document.getElementById('tab-card').classList.contains('active') ? 'Credit/Debit Card' : 'UPI Transfer';
         
         if (!amount || amount <= 0) return alert("Enter a valid amount");
-        await fetch('/api/add_money', {
+        await fetch('https://vortex-4.onrender.com/api/add_money', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ amount: parseFloat(amount), method: method })
         });
@@ -428,7 +428,7 @@
         
         if (!amount || amount <= 0) return alert("Enter a valid amount");
 
-        const res = await fetch('/api/spend', {
+        const res = await fetch('https://vortex-4.onrender.com//api/spend', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
                 amount: parseFloat(amount), category: category, 
@@ -452,7 +452,7 @@
         const charity = document.getElementById('donate-charity').value;
         if (!amount || amount <= 0) return alert("Enter a valid amount");
 
-        const res = await fetch('/api/donate', {
+        const res = await fetch('https://vortex-4.onrender.com//api/donate', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ amount: parseFloat(amount), charity: charity })
         });
@@ -466,7 +466,7 @@
     }
 
     async function redeem() {
-        const res = await fetch('/api/redeem', { method: 'POST' });
+        const res = await fetch('https://vortex-4.onrender.com//api/redeem', { method: 'POST' });
         if (!res.ok) alert("Piggy bank is empty!");
         else alert("🎉 Transfer successful!");
         closePiggyModal();
