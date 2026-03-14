@@ -35,12 +35,13 @@ Designed with a lightweight yet robust architecture, it features persistent SQLi
 ```text
 FinPay_Simulator/
 │
-├── app.py                  # Main Flask server, auth logic, ML engine, and API routes
-├── finpay.db               # SQLite relational database (auto-generated on run)
+├── instance/               
+│   └── finpay.db           # SQLite relational database (auto-generated on run)
 ├── static/                 
 │   └── logo.jpeg           # Application branding
-└── templates/              
-    └── index.html          # Frontend UI, CSS styling, and JS controllers
+├── templates/              
+│   └── index.html          # Frontend UI, CSS styling, and JS controllers
+└── app.py                  # Main Flask server, auth logic, ML engine, and API routes
 
 ```
 
