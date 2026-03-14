@@ -44,19 +44,4 @@ FinPay_Simulator/
 ├── requirements.txt        # Production dependencies
 └── app.py                  # Main Flask server, auth logic, & ML engine
 
-```
 
-## 🚀 Deployment (Render + Neon)
-
-To host this project live:
-
-1. **Database:** Create a free PostgreSQL project on **Neon.tech** and copy your Connection String.
-2. **Web Service:** Create a new Web Service on **Render.com** and connect your GitHub repo.
-3. **Environment Variables:** Add the following in the Render Dashboard:
-* `DATABASE_URL`: Your Neon connection string.
-* `SECRET_KEY`: A random secret string for session security.
-
-
-4. **Commands:**
-* **Build Command:** `pip install -r requirements.txt`
-* **Start Command:** `gunicorn app:app`
