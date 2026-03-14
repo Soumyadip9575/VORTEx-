@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -5,10 +6,19 @@ import math
 import random
 
 app = Flask(__name__)
-app.secret_key = 'finpay_vortex_super_secret'
+
+# Grab the secret key from the environment (Render) or use a fallback for local testing
+app.secret_key = os.environ.get('SECRET_KEY', 'finpay_vortex_super_secret')
 
 # --- Database Configuration ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finpay.db'
+# Looks for the Neon URL on Render. If it doesn't find it (like on your computer), it uses SQLite.
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///finpay.db')
+
+# SQLAlchemy requires the URL to start with 'postgresql://' instead of 'postgres://'
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -16,7 +26,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False) # In production, hash this!
+    password = db.Column(db.String(100), nullable=False) 
     main_balance = db.Column(db.Float, default=0.0)
     piggy_bank = db.Column(db.Float, default=0.0)
     transactions = db.relationship('Transaction', backref='user', lazy=True)
@@ -33,7 +43,11 @@ class Transaction(db.Model):
     upi = db.Column(db.String(100))
 
     def to_dict(self):
-        return {"id": self.id, "date": self.date, "type": self.type, "amount": self.amount, "category": self.category, "receiver": self.receiver, "upi": self.upi}
+        return {
+            "id": self.id, "date": self.date, "type": self.type, 
+            "amount": self.amount, "category": self.category, 
+            "receiver": self.receiver, "upi": self.upi
+        }
 
 class Milestone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,7 +59,10 @@ class Milestone(db.Model):
     done = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
-        return {"id": self.id, "desc": self.desc, "target": self.target, "progress": self.progress, "category": self.category, "done": self.done}
+        return {
+            "id": self.id, "desc": self.desc, "target": self.target, 
+            "progress": self.progress, "category": self.category, "done": self.done
+        }
 
 # --- Initialize Database ---
 with app.app_context():
@@ -100,7 +117,7 @@ def register():
         
     new_user = User(username=username, password=password)
     db.session.add(new_user)
-    db.session.commit() # Commit to get the user ID
+    db.session.commit() 
     
     add_default_milestones(new_user)
     session['username'] = username
@@ -133,7 +150,7 @@ def get_state():
     for t in txs:
         if t.type == 'Spend':
             analytics[t.category] = analytics.get(t.category, 0) + t.amount
-            spends.insert(0, t.amount) # Insert at 0 to keep chronological order for ML
+            spends.insert(0, t.amount) 
 
     ai_offer = "Keep spending to unlock personalized AI offers!"
     if analytics:
